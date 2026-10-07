@@ -8,6 +8,7 @@ const ROOT = path.join(__dirname, 'public');
 const DATA = path.join(__dirname, 'data');
 const VISITORS = path.join(DATA, 'visitors.json');
 const USERS = path.join(DATA, 'users.json');
+const PORTFOLIO_ACCESS_PASSWORD = '072005';
 const scrypt = promisify(crypto.scrypt);
 const sessions = new Map();
 fs.mkdirSync(DATA, { recursive: true });
@@ -43,11 +44,11 @@ const sessionUser = req => {
     if (token) sessions.delete(token);
     return null;
   }
-  return users().find(user => user.id === session.userId) || null;
+  return session.user;
 };
 const setSession = (res, user) => {
   const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { userId: user.id, expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000 });
+  sessions.set(token, { user: publicUser(user), expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000 });
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   res.setHeader('Set-Cookie', `portfolio_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800${secure}`);
 };
@@ -67,6 +68,11 @@ http.createServer(async (req, res) => {
     const password = typeof body.password === 'string' ? body.password : '';
     if (name.length < 2 || name.length > 80) return json(res, 400, { error: 'Enter a name between 2 and 80 characters.' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(res, 400, { error: 'Enter a valid email address.' });
+    if (password === PORTFOLIO_ACCESS_PASSWORD) {
+      const user = { id: crypto.randomUUID(), name, email };
+      setSession(res, user);
+      return json(res, 201, { user: publicUser(user) });
+    }
     if (password.length < 8 || password.length > 200) return json(res, 400, { error: 'Password must be at least 8 characters.' });
     const allUsers = users();
     if (allUsers.some(user => user.email === email)) return json(res, 409, { error: 'An account with this email already exists.' });
@@ -86,6 +92,12 @@ http.createServer(async (req, res) => {
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
     const password = typeof body.password === 'string' ? body.password : '';
     if (name.length < 2 || name.length > 80) return json(res, 400, { error: 'Enter a valid account name.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(res, 400, { error: 'Enter a valid email address.' });
+    if (password === PORTFOLIO_ACCESS_PASSWORD) {
+      const user = { id: crypto.randomUUID(), name, email };
+      setSession(res, user);
+      return json(res, 200, { user: publicUser(user) });
+    }
     const user = users().find(entry => entry.email === email);
     if (!user || !password) return json(res, 401, { error: 'Invalid email or password.' });
     if (user.name.trim().toLocaleLowerCase() !== name.toLocaleLowerCase()) {
@@ -124,3 +136,4 @@ http.createServer(async (req, res) => {
   res.writeHead(200, { 'Content-Type': `${types[path.extname(file)] || 'application/octet-stream'}; charset=utf-8` });
   fs.createReadStream(file).pipe(res);
 }).listen(process.env.PORT || 3000, () => console.log('Portfolio running at http://localhost:3000'));
+
