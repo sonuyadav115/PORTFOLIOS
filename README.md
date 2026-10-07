@@ -8,7 +8,7 @@
 
 ## Portfolio access
 
-The Log In and Sign Up forms both accept the password `072005` with any valid name and email address. This shared access code is for portfolio access only; it is not suitable for protecting private content.
+The Log In and Sign Up forms both accept the password `11072005` with any name and a valid email address. The static-site login works on GitHub Pages without a backend. This shared access code is checked in browser code, so it only hides the portfolio screen and is not suitable for protecting private content.
 
 ## Personalize
 
