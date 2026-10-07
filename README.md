@@ -6,6 +6,10 @@
 2. From this folder run: `npm start`
 3. Open `http://localhost:3000`
 
+## Portfolio access
+
+The Log In and Sign Up forms both accept the password `072005` with any valid name and email address. This shared access code is for portfolio access only; it is not suitable for protecting private content.
+
 ## Personalize
 
 - Replace `YOUR NAME`, email, phone number, and social URLs in `public/index.html`.
@@ -16,3 +20,4 @@
 ## Visitor analytics
 
 Each visit is saved in `data/visitors.json`. The protected endpoint is `GET /api/analytics` using an `Authorization: Bearer <ADMIN_TOKEN>` header. Before deploying, set an `ADMIN_TOKEN` environment variable. For production, move visitor storage to a proper database (such as PostgreSQL or MongoDB) and add real user authentication before storing private notes.
+
