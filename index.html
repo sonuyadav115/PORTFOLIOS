@@ -31,7 +31,7 @@
 
       <p class="auth-eyebrow">PORTFOLIO ACCESS / 100+</p>
       <h1 id="authTitle">Good to see<br><span>you here.</span></h1>
-      <p class="auth-intro">Sign in or create an account to explore the portfolio.</p>
+      <p class="auth-intro">Enter your name, email, and access password to explore the portfolio.</p>
 
       <div class="auth-tabs" role="tablist" aria-label="Account access">
         <button class="auth-tab active" id="loginTab" type="button" role="tab" aria-selected="true">LOG IN</button>
@@ -41,7 +41,7 @@
       <form id="authForm">
         <label class="auth-field" id="authNameField">
           <span>FULL NAME</span>
-          <input id="authName" name="name" type="text" autocomplete="name" minlength="2" maxlength="80" required>
+          <input id="authName" name="name" type="text" autocomplete="name" maxlength="80" required>
         </label>
         <label class="auth-field">
           <span>EMAIL ADDRESS</span>
@@ -798,6 +798,8 @@
       const submitButton = document.getElementById('authSubmit');
       const navButton = document.getElementById('authNavButton');
       const heroGreeting = document.getElementById('heroGreeting');
+      const accessSessionKey = 'portfolio_access_user';
+      const accessPassword = '11072005';
       let mode = 'login';
 
       function setMode(nextMode) {
@@ -824,52 +826,42 @@
       document.getElementById('loginTab').addEventListener('click', () => setMode('login'));
       document.getElementById('signupTab').addEventListener('click', () => setMode('signup'));
 
-      form.addEventListener('submit', async event => {
+      form.addEventListener('submit', event => {
         event.preventDefault();
-        const signingUp = mode === 'signup';
-        const payload = {
-          name: nameInput.value,
-          email: document.getElementById('authEmail').value,
-          password: passwordInput.value
-        };
-
-        submitButton.disabled = true;
-        message.textContent = signingUp ? 'CREATING YOUR ACCOUNT...' : 'CHECKING YOUR DETAILS...';
         message.classList.remove('error');
-        try {
-          const response = await fetch(`/api/auth/${mode}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const result = await response.json();
-          if (!response.ok) throw new Error(result.error || 'Unable to sign in.');
-          message.textContent = `WELCOME, ${result.user.name.toUpperCase()}`;
-          showPortfolio(result.user);
-        } catch (error) {
-          message.textContent = error.message === 'Failed to fetch'
-            ? 'SERVER UNAVAILABLE. PLEASE TRY AGAIN.'
-            : error.message.toUpperCase();
+        if (passwordInput.value !== accessPassword) {
+          message.textContent = 'INCORRECT PASSWORD. PLEASE TRY AGAIN.';
           message.classList.add('error');
-        } finally {
-          submitButton.disabled = false;
+          return;
         }
+
+        const user = {
+          name: nameInput.value.trim(),
+          email: document.getElementById('authEmail').value.trim()
+        };
+        sessionStorage.setItem(accessSessionKey, JSON.stringify(user));
+        message.textContent = `WELCOME, ${user.name.toUpperCase()}`;
+        showPortfolio(user);
       });
 
-      navButton.addEventListener('click', async () => {
-        await fetch('/api/auth/logout', { method: 'POST' });
+      navButton.addEventListener('click', () => {
+        sessionStorage.removeItem(accessSessionKey);
         window.location.reload();
       });
 
-      fetch('/api/auth/session', { cache: 'no-store' })
-        .then(response => response.ok ? response.json() : null)
-        .then(result => {
-          if (result?.user) showPortfolio(result.user);
-        })
-        .catch(() => {
-          message.textContent = 'SERVER UNAVAILABLE. PLEASE TRY AGAIN.';
-          message.classList.add('error');
-        });
+      const savedUser = sessionStorage.getItem(accessSessionKey);
+      if (savedUser) {
+        try {
+          const user = JSON.parse(savedUser);
+          if (typeof user.name === 'string' && typeof user.email === 'string') {
+            showPortfolio(user);
+          } else {
+            sessionStorage.removeItem(accessSessionKey);
+          }
+        } catch {
+          sessionStorage.removeItem(accessSessionKey);
+        }
+      }
     })();
   </script>
 
