@@ -8,7 +8,7 @@ const ROOT = path.join(__dirname, 'public');
 const DATA = path.join(__dirname, 'data');
 const VISITORS = path.join(DATA, 'visitors.json');
 const USERS = path.join(DATA, 'users.json');
-const PORTFOLIO_ACCESS_PASSWORD = '072005';
+const PORTFOLIO_ACCESS_PASSWORD = '11072005';
 const scrypt = promisify(crypto.scrypt);
 const sessions = new Map();
 fs.mkdirSync(DATA, { recursive: true });
